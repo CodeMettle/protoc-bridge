@@ -2,18 +2,18 @@ import ReleaseTransformations._
 
 scalaVersion in ThisBuild := "2.11.7"
 
-crossScalaVersions in ThisBuild := Seq("2.10.6", "2.11.7", "2.12.0")
+crossScalaVersions in ThisBuild := Seq("2.10.5", "2.11.7")
 
 scalacOptions in ThisBuild ++= {
   CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((2, v)) if v <= 11 => List("-target:jvm-1.7")
+    case Some((2, v)) if v <= 11 => List("-target:jvm-1.6")
     case _ => Nil
   }
 }
 
 javacOptions in ThisBuild ++= {
   CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((2, v)) if v <= 11 => List("-target", "7", "-source", "7")
+    case Some((2, v)) if v <= 11 => List("-target", "6", "-source", "6")
     case _ => Nil
   }
 }
@@ -21,6 +21,20 @@ javacOptions in ThisBuild ++= {
 organization in ThisBuild := "com.trueaccord.scalapb"
 
 name in ThisBuild := "protoc-bridge"
+
+publishMavenStyle in ThisBuild := true
+
+credentials in ThisBuild += {
+  def file = "credentials-" + (if (isSnapshot.value) "snapshots" else "internal")
+
+  Credentials(Path.userHome / ".m2" / file)
+}
+
+publishTo := {
+  def path = "/repository/" + (if (isSnapshot.value) "snapshots" else "internal")
+
+  Some("CodeMettle Maven" at s"http://maven.codemettle.com$path")
+}
 
 releaseCrossBuild := true
 

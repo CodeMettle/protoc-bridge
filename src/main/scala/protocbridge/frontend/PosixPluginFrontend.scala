@@ -1,11 +1,11 @@
 package protocbridge.frontend
 
-import java.nio.file.{Files, Path}
+import java.io.{File, FileInputStream, FileOutputStream}
+
 import protocbridge.ProtocCodeGenerator
-import java.nio.file.attribute.PosixFilePermission
-import scala.concurrent.Future
+
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.collection.JavaConverters._
+import scala.concurrent.Future
 import scala.sys.process._
 
 /** PluginFrontend for Unix-like systems (Linux, Mac, etc)
@@ -13,19 +13,19 @@ import scala.sys.process._
   * Creates a pair of named pipes for input/output and a shell script that communicates with them.
   */
 object PosixPluginFrontend extends PluginFrontend {
-  case class InternalState(inputPipe: Path, outputPipe: Path, shellScript: Path)
+  case class InternalState(inputPipe: File, outputPipe: File, shellScript: File)
 
-  override def prepare(plugin: ProtocCodeGenerator): (Path, InternalState) = {
+  override def prepare(plugin: ProtocCodeGenerator): (File, InternalState) = {
     val inputPipe = createPipe()
     val outputPipe = createPipe()
     val sh = createShellScript(inputPipe, outputPipe)
 
     Future {
-      val fsin = Files.newInputStream(inputPipe)
+      val fsin = new FileInputStream(inputPipe)
       val response = PluginFrontend.runWithInputStream(plugin, fsin)
       fsin.close()
 
-      val fsout = Files.newOutputStream(outputPipe)
+      val fsout = new FileOutputStream(outputPipe)
       fsout.write(response.toByteArray)
       fsout.close()
     }
@@ -33,28 +33,26 @@ object PosixPluginFrontend extends PluginFrontend {
   }
 
   override def cleanup(state: InternalState): Unit = {
-    Files.delete(state.inputPipe)
-    Files.delete(state.outputPipe)
-    Files.delete(state.shellScript)
+    state.inputPipe.delete()
+    state.outputPipe.delete()
+    state.shellScript.delete()
   }
 
-  private def createPipe(): Path = {
-    val pipeName = Files.createTempFile("protopipe-", ".pipe")
-    Files.delete(pipeName)
-    Seq("mkfifo", "-m", "600", pipeName.toAbsolutePath.toString).!!
+  private def createPipe(): File = {
+    val pipeName = File.createTempFile("protopipe-", ".pipe")
+    pipeName.delete()
+    Seq("mkfifo", "-m", "600", pipeName.getAbsolutePath).!!
     pipeName
   }
 
-  private def createShellScript(inputPipe: Path, outputPipe: Path): Path = {
+  private def createShellScript(inputPipe: File, outputPipe: File): File = {
     val scriptName = PluginFrontend.createTempFile("",
       s"""|#!/usr/bin/env sh
           |set -e
           |cat /dev/stdin > "$inputPipe"
           |cat "$outputPipe"
       """.stripMargin)
-    Files.setPosixFilePermissions(scriptName, Set(
-      PosixFilePermission.OWNER_EXECUTE,
-      PosixFilePermission.OWNER_READ).asJava)
+    Seq("chmod", "+x", scriptName.getAbsolutePath).!!
     scriptName
   }
 }

@@ -1,7 +1,9 @@
 package protocbridge.frontend
 
-import java.nio.file.{Files, Path}
+import java.io.File
+
 import protocbridge.ProtocCodeGenerator
+
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import java.net.ServerSocket
@@ -12,9 +14,9 @@ import java.net.ServerSocket
   */
 class WindowsPluginFrontend(pythonExecutable: String) extends PluginFrontend {
 
-  case class InternalState(batFile: Path, pyFile: Path)
+  case class InternalState(batFile: File, pyFile: File)
 
-  override def prepare(plugin: ProtocCodeGenerator): (Path, InternalState) = {
+  override def prepare(plugin: ProtocCodeGenerator): (File, InternalState) = {
     val ss = new ServerSocket(0)
     val state = createWindowsScripts(ss.getLocalPort)
 
@@ -30,8 +32,8 @@ class WindowsPluginFrontend(pythonExecutable: String) extends PluginFrontend {
   }
 
   override def cleanup(state: InternalState): Unit = {
-    Files.delete(state.batFile)
-    Files.delete(state.pyFile)
+    state.batFile.delete()
+    state.pyFile.delete()
   }
 
   private def createWindowsScripts(port: Int): InternalState = {

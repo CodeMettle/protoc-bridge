@@ -13,7 +13,7 @@ class ProtocBridgeSpec extends FlatSpec with MustMatchers {
     // Notifies the frontend to set up a protoc plugin that runs the given generator. It returns
     // the system path of the executable and an arbitary internal state object that is passed
     // later. Useful for cleanup.
-    def prepare(plugin: ProtocCodeGenerator): (java.nio.file.Path, InternalState) = (null, ())
+    def prepare(plugin: ProtocCodeGenerator): (File, InternalState) = (null, ())
 
     def cleanup(state: InternalState): Unit = {}
   }

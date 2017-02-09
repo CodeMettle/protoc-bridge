@@ -1,7 +1,6 @@
 package protocbridge
 
 import java.io.File
-import java.nio.file.Path
 
 import protocbridge.frontend.PluginFrontend
 
@@ -66,7 +65,7 @@ object ProtocBridge {
                            params: Seq[String],
                            pluginFrontend: PluginFrontend = PluginFrontend.newInstance()): A = {
 
-    val generatorScriptState: Seq[(String, (Path, pluginFrontend.InternalState))] =
+    val generatorScriptState: Seq[(String, (File, pluginFrontend.InternalState))] =
       namedGenerators.map {
         case (name, plugin) => (name, pluginFrontend.prepare(plugin))
       }

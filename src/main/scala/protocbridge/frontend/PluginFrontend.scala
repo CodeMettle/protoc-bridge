@@ -1,7 +1,6 @@
 package protocbridge.frontend
 
-import java.io.{InputStream, PrintWriter, StringWriter}
-import java.nio.file.{Files, Path}
+import java.io._
 
 import com.google.protobuf.ExtensionRegistry
 import com.google.protobuf.compiler.PluginProtos.{CodeGeneratorRequest, CodeGeneratorResponse}
@@ -34,7 +33,7 @@ trait PluginFrontend {
   // Notifies the frontend to set up a protoc plugin that runs the given generator. It returns
   // the system path of the executable and an arbitary internal state object that is passed
   // later. Useful for cleanup.
-  def prepare(plugin: ProtocCodeGenerator): (Path, InternalState)
+  def prepare(plugin: ProtocCodeGenerator): (File, InternalState)
 
   def cleanup(state: InternalState): Unit
 }
@@ -67,9 +66,9 @@ object PluginFrontend {
     runWithBytes(gen, bytes)
   }
 
-  def createTempFile(extension: String, content: String): Path = {
-    val fileName = Files.createTempFile("protocbridge", extension)
-    val os = Files.newOutputStream(fileName)
+  def createTempFile(extension: String, content: String): File = {
+    val fileName = File.createTempFile("protocbridge", extension)
+    val os = new FileOutputStream(fileName)
     os.write(content.getBytes("UTF-8"))
     os.close()
     fileName
